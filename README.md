@@ -14,4 +14,7 @@ https://docs.mapbox.com/mapbox-gl-js/example/cluster-html/
 https://docs.mapbox.com/mapbox-gl-js/example/geojson-line/
 
 
+- Add a GeoJSON polygon:
+https://docs.mapbox.com/mapbox-gl-js/example/geojson-polygon/
+
 ## Bing Map

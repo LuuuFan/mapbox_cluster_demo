@@ -2,6 +2,7 @@
 <html>
 <head>
 	<title>Map Cluster Demo</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 	<style>
@@ -9,20 +10,71 @@
 			margin: 0;
 			padding: 0;
 			font-family: Arial;
+			color: white;
 		}
-		ul{
+		.background{
+			position: fixed;
+			top: 0;
+			left: 0;
+			height: 100vh;
+			width: 100vw;
+			background-color: rgba(0,0,0,0.3);
+			z-index: -1;
+		}
+		.background img{
+			height: 100%;
+			width: 100%;
+			object-fit: cover;
+		}
+		a{
+			color: white;
+		}
+		header{
+			width: 100vw;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 2em 0 1em 0;
+		}
+		section{
 			width: 60%;
 			margin: 2em auto;
 			list-style: none;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		li{
+			margin-bottom: 0.5em;
+		}
+		@media only screen and (max-width: 960px) {
+			section{
+				width: 95%;
+			}
 		}
 	</style>
-	<ul>
-		<a href="./mapbox_line.html" title="">
-			<li>Mapbox GeoJSON Line</li>
-		</a>
-		<a href="./mapbox_polygon.html" title="">
-			<li>Mapbox GeoJSON Polygon</li>
-		</a>
-	</ul>
+	<header>
+		<div class=logo>
+			<img src="https://n3n.io/wp-content/uploads/2018/05/N3N_White_Small.png">
+		</div>
+	</header>
+	<div class='background'>
+		<img src="http://n3n.ai/wp-content/uploads/2019/08/bg.png">
+	</div>
+	<section>
+		<h3>Mapbox</h3>
+		<ul>
+			<a href="./mapbox_line.html" title="">
+				<li>Mapbox GeoJSON Line</li>
+			</a>
+			<a href="./mapbox_polygon.html" title="">
+				<li>Mapbox GeoJSON Polygon</li>
+			</a>
+		</ul>
+	</section>
+	<section>
+		<h3>Bing Map</h3>
+		<ul></ul>
+	</section>
 </body>
 </html>
