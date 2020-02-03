@@ -39,6 +39,7 @@
 			background-color: #ededed;
 		}
 		.marker{
+			cursor: pointer;
 			height: 1em;
 			width: 1em;
 			border-radius: 50%;
@@ -47,6 +48,24 @@
 		#map{
 			width: 100vw;
 			height: 100vh;
+		}
+		table{
+			border-radius: 5px;
+			border: 1px solid lightgray;
+			margin: 1em;
+			border-spacing: 0;
+		}
+		th{
+			text-align: center;
+		}
+		td{
+			padding: 0.1em 0.3em;
+		}
+		tfoot, thead{
+			background-color: #ededed;
+		}
+		tfoot>tr>td, thead>tr>td{
+			padding: 0.3em;
 		}
 	</style>
 	<div id='map'></div>
@@ -97,6 +116,7 @@
 					mapboxgl: mapboxgl
 				})
 			);
+			map.addControl(new mapboxgl.NavigationControl());
 			map.on('zoom', function(){
 				if (map.getZoom() < 15 && markers.length) {
 					markers.forEach(marker => marker.remove())
@@ -140,6 +160,28 @@
 
 			map.setLayerZoomRange('route', 2, 15);
 			
+			map.on("click", "route", e => {
+				new mapboxgl.Popup()
+							.setLngLat(e.lngLat)
+							.setHTML(makeTalbePopup())
+							.addTo(map);
+			});
+
+			map.on("mouseenter", "route", () => map.getCanvas().style.cursor = "pointer")
+			map.on("mouseleave", "route", () => map.getCanvas().style.cursor = "")
+		}
+
+		const makeTalbePopup = (camera, idx) => {
+			let str = "<table><thead><tr><th>Name</th><th>Lat</th><th>Lng</th></tr></thead><tbody>";
+			if (camera) {
+					str += `<tr><td>Camera${idx + 1}</td><td>${camera.lat}</td><td>${camera.lng}</td></tr>`
+			} else {
+				markersList.forEach((camera, idx) => {
+					str += `<tr><td>Camera${idx + 1}</td><td>${camera.lat}</td><td>${camera.lng}</td></tr>`
+				})
+			}
+			str += "</tbody><tfoot><tr><td colspan='3'></td></tr></tfoot>"
+			return str;
 		}
 
 		const renderLayerList = () => {
@@ -161,14 +203,15 @@
 
 		const placeMarker = () => {
 			if (!map) return;
-			markersList.forEach(camera => {
+			markersList.forEach((camera, idx) => {
 				const div = document.createElement("div");
 				div.classList.add("marker");
 
 				// create the marker
 				const marker = new mapboxgl.Marker(div)
 					.setLngLat([camera.lng, camera.lat])
-					// .setPopup(popup) // sets a popup on this marker
+					.setPopup(new mapboxgl.Popup()
+											.setHTML(makeTalbePopup(camera, idx))) // sets a popup on this marker
 					.addTo(map);
 				markers.push(marker);
 			})
