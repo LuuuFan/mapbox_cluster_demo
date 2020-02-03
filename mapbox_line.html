@@ -67,6 +67,9 @@
 		tfoot>tr>td, thead>tr>td{
 			padding: 0.3em;
 		}
+		.player{
+			margin: 0.5em;
+		}
 	</style>
 	<div id='map'></div>
 	<ul class='layers'>
@@ -219,7 +222,9 @@
 				const marker = new mapboxgl.Marker(div)
 					.setLngLat([camera.lng, camera.lat])
 					.setPopup(new mapboxgl.Popup()
-											.setHTML(makeTalbePopup(camera, idx))) // sets a popup on this marker
+											// .setHTML(makeTalbePopup(camera, idx))) // sets a popup on this marker
+											.setMaxWidth(500)
+											.setHTML(`<div class='player'><iframe src="https://www.youtube.com/embed/1znmB0gQgS4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`)) // sets a popup on this marker
 					.addTo(map);
 				markers.push(marker);
 			})
