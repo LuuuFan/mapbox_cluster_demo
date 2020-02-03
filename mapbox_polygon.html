@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>MAPBOX CLUSTER DEMO - Line</title>
+	<title>MAPBOX CLUSTER DEMO - Polygon</title>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
 	<link rel="icon" type="image/png" href="https://res.cloudinary.com/dq132990i/image/upload/v1580538916/intmqwj8xyz5zx6ikhfn.png">
@@ -121,7 +121,7 @@
 				if (map.getZoom() < 15 && markers.length) {
 					markers.forEach(marker => marker.remove())
 					markers = [];
-					if(!map.getLayer("route")) putLineLayer();
+					if(!map.getLayer("route")) addPolygonLayer();
 				} else if(map.getZoom() >= 15 && !markers.length){
 					placeMarker();
 					// delete line
@@ -130,45 +130,45 @@
 			})
 		}
 
-		const putLineLayer = () => {
+		const addPolygonLayer = () => {
 			if (!map) return;
-			map.addSource('route', {
+			const coordinates = markersList.map(m => [m.lng, m.lat]);
+			coordinates.push([markersList[0].lng, markersList[0].lat])
+			console.log(coordinates)
+			map.addSource('field', {
 									'type': 'geojson',
 									'data': {
 										'type': 'Feature',
 										'properties': {},
 										'geometry': {
-										'type': 'LineString',
-										'coordinates': markersList.map(m => [m.lng, m.lat]),
+											'type': 'Polygon',
+											'coordinates': [coordinates],
 										},
 									}
 						});
 
 			map.addLayer({
-							'id': 'route',
-							'type': 'line',
-							'source': 'route',
-							'layout': {
-										'line-join': 'round',
-										'line-cap': 'round'
-									},
+							'id': 'field',
+							'type': 'fill',
+							'source': 'field',
+							'layout': {},
 							'paint': {
-										'line-color': '#ff0000',
-										'line-width': 5
+										'fill-color': '#ff0000',
+										'fill-opacity': 0.5
 									}
 						});
 
-			map.setLayerZoomRange('route', 2, 15);
+			map.setLayerZoomRange('field', 2, 15);
 			
-			map.on("click", "route", e => {
+			map.on("click", "field", e => {
 				new mapboxgl.Popup()
 							.setLngLat(e.lngLat)
 							.setHTML(makeTalbePopup())
 							.addTo(map);
 			});
 
-			map.on("mouseenter", "route", () => map.getCanvas().style.cursor = "pointer")
-			map.on("mouseleave", "route", () => map.getCanvas().style.cursor = "")
+			map.on("mouseenter", "field", () => map.getCanvas().style.cursor = "pointer")
+			map.on("mouseleave", "field", () => map.getCanvas().style.cursor = "")
 		}
 
 		const makeTalbePopup = (camera, idx) => {
