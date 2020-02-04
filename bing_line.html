@@ -6,7 +6,7 @@
 	<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="icon" type="image/png" href="https://cdn3.iconfinder.com/data/icons/logos-brands-3/24/logo_brand_brands_logos_bing-512.png">
-	<script type='text/javascript' src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB' async defer></script>
+	<script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB' async defer></script>
 </head>
 <body onload="GetMap();">
 	<style>
@@ -17,6 +17,12 @@
 		#map{
 			width: 100vw;
 			height: 100vh;
+		}
+		.marker{
+			height: 1em;
+			width: 1em;
+			border-radius: 50%;
+			background-color: red;
 		}
 	</style>
 	<div id='map'></div>
@@ -49,15 +55,30 @@
 								street: "Bovet Road",
 							},
 						];
-		let map;
+		let map, pins;
 		const GetMap = () => {
 			map = new Microsoft.Maps.Map("#map", {
 				credentials: key,
 				center: new Microsoft.Maps.Location(37.5495379, -122.3187422),
-				mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+				mapTypeId: Microsoft.Maps.MapTypeId.road,
     		zoom: 16
 			});
 			placeMarker();
+			Microsoft.Maps.Events.addHandler(map, 'mousewheel', () => {
+				console.log(map.getZoom());
+				if (map.getZoom() < 16 && pins) {
+					removePushpinsLayer();
+				} else if(!pins){
+					placeMarker();
+				}
+			});
+		}
+
+		const removePushpinsLayer = () => {
+			for(let i = 0; i < map.layers.length; i++){
+				if (map.layers[i]._pushpins) map.layers.removeAt(i)
+			}
+			pins = null;
 		}
 
 		const placeMarker = () => {
@@ -67,8 +88,8 @@
       //Load the module.
       Microsoft.Maps.loadModule('HtmlPushpinLayerModule', function () {
           //Create a simple reusable HTML template to keep things easy.
-          const div = '<div style="background-color:red;width:1em;height:1em;border-radius: 50%;"></div>';
-          const pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
+          const div = '<div class="marker"></div>';
+          pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
           const layer = new HtmlPushpinLayer();
           layer.setPushpins(pins);
 
