@@ -68,8 +68,10 @@
 				console.log(map.getZoom());
 				if (map.getZoom() < 16 && pins) {
 					removePushpinsLayer();
-				} else if(!pins){
+					addPolyline();
+				} else if(map.getZoom() >= 16 && !pins){
 					placeMarker();
+					removePolyline();
 				}
 			});
 		}
@@ -79,6 +81,20 @@
 				if (map.layers[i]._pushpins) map.layers.removeAt(i)
 			}
 			pins = null;
+		}
+
+		const addPolyline = () => {
+			const polyline = new Microsoft.Maps.Polyline(markersList.map(marker => new Microsoft.Maps.Location(marker.lat, marker.lng)), {
+				strokeColor: 'red', 
+				strokeThickness: 5
+			})
+			map.entities.push(polyline);
+		}
+
+		const removePolyline = () => {
+			for(let i = map.entities.getLength() - 1; i >= 0; i--){
+				if (map.entities.get(i) instanceof Microsoft.Maps.Polyline) map.entities.removeAt(i);
+			}
 		}
 
 		const placeMarker = () => {
