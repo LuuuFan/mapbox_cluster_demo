@@ -55,7 +55,7 @@
 								street: "Bovet Road",
 							},
 						];
-		let map, pins;
+		let map, pinToggle;
 		const GetMap = () => {
 			map = new Microsoft.Maps.Map("#map", {
 				credentials: key,
@@ -66,21 +66,53 @@
 			placeMarker();
 			Microsoft.Maps.Events.addHandler(map, 'mousewheel', () => {
 				console.log(map.getZoom());
-				if (map.getZoom() < 16 && pins) {
-					removePushpinsLayer();
+				if (map.getZoom() < 16 && pinToggle) {
+					removeMarker();
 					addPolygon();
-				} else if(map.getZoom() >= 16 && !pins){
+				} else if(map.getZoom() >= 16 && !pinToggle){
 					placeMarker();
 					removePolygon();
 				}
 			});
 		}
 
-		const removePushpinsLayer = () => {
+		const placeMarkerLayer = () => {
+			//Register the custom module.
+			Microsoft.Maps.registerModule('HtmlPushpinLayerModule', 'HtmlPushpinLayerModule.js');
+
+			//Load the module.
+			Microsoft.Maps.loadModule('HtmlPushpinLayerModule', function () {
+				//Create a simple reusable HTML template to keep things easy.
+				const div = '<div class="marker"></div>';
+				pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
+				const layer = new HtmlPushpinLayer();
+				layer.setPushpins(pins);
+
+				//Add the HTML pushpin to the map.
+				map.layers.insert(layer);
+			});
+		}
+
+		const removeMarkerLayer = () => {
 			for(let i = 0; i < map.layers.length; i++){
 				if (map.layers[i]._pushpins) map.layers.removeAt(i)
 			}
 			pins = null;
+		}
+
+		const placeMarker = () => {
+			pinToggle = true;
+			markersList.forEach(marker => {
+				const pushpin = new Microsoft.Maps.Pushpin(new Microsoft.Maps.Location(marker.lat, marker.lng), {color: 'red'});
+				map.entities.push(pushpin);
+			})
+		}
+
+		const removeMarker = () => {
+			pinToggle = false;
+			for(let i = map.entities.getLength() - 1; i >= 0; i--){
+				if (map.entities.get(i) instanceof Microsoft.Maps.Pushpin) map.entities.removeAt(i);
+			}
 		}
 
 		const addPolygon = () => {
@@ -98,22 +130,7 @@
 			}
 		}
 
-		const placeMarker = () => {
-			//Register the custom module.
-      Microsoft.Maps.registerModule('HtmlPushpinLayerModule', 'HtmlPushpinLayerModule.js');
 
-      //Load the module.
-      Microsoft.Maps.loadModule('HtmlPushpinLayerModule', function () {
-          //Create a simple reusable HTML template to keep things easy.
-          const div = '<div class="marker"></div>';
-          pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
-          const layer = new HtmlPushpinLayer();
-          layer.setPushpins(pins);
-
-          //Add the HTML pushpin to the map.
-          map.layers.insert(layer);
-      });
-		}
 	</script>
 </body>
 </html>

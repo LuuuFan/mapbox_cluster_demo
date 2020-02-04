@@ -27,35 +27,35 @@
 	</style>
 	<div id='map'></div>
 	<script>
-		const key = "AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB",
-					markersList = [
-							{
-								lat: 37.550584,  
-								lng: -122.317186,
-								street: "Bovet Road",
-							},{
-								lat: 37.549989,
-								lng:  -122.316532,
-								street: "Bovet Road",
-							},{
-								lat: 37.550201, 
-								lng:  -122.315727,
-								street: "Bovet Road",
-							},{
-								lat: 37.550541, 
-								lng:  -122.315276,
-								street: "Bovet Road",
-							},{
-								lat: 37.550864, 
-								lng: -122.314825,
-								street: "Bovet Road",
-							},{
-								lat: 37.551647, 
-								lng: -122.314568,
-								street: "Bovet Road",
-							},
-						];
-		let map, pins;
+		const	key = "AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB",
+				markersList = [
+						{
+							lat: 37.550584,  
+							lng: -122.317186,
+							street: "Bovet Road",
+						},{
+							lat: 37.549989,
+							lng:  -122.316532,
+							street: "Bovet Road",
+						},{
+							lat: 37.550201, 
+							lng:  -122.315727,
+							street: "Bovet Road",
+						},{
+							lat: 37.550541, 
+							lng:  -122.315276,
+							street: "Bovet Road",
+						},{
+							lat: 37.550864, 
+							lng: -122.314825,
+							street: "Bovet Road",
+						},{
+							lat: 37.551647, 
+							lng: -122.314568,
+							street: "Bovet Road",
+						},
+					];
+		let map, pinToggle;
 		const GetMap = () => {
 			map = new Microsoft.Maps.Map("#map", {
 				credentials: key,
@@ -65,14 +65,45 @@
 			});
 			placeMarker();
 			Microsoft.Maps.Events.addHandler(map, 'mousewheel', () => {
-				console.log(map.getZoom());
-				if (map.getZoom() < 16 && pins) {
-					removePushpinsLayer();
+				if (map.getZoom() < 16 && pinToggle) {
+					removeMarker();
 					addPolyline();
-				} else if(map.getZoom() >= 16 && !pins){
+				} else if(map.getZoom() >= 16 && !pinToggle){
 					placeMarker();
 					removePolyline();
 				}
+			});
+		}
+
+		const placeMarker = () => {
+			pinToggle = true;
+			markersList.forEach(marker => {
+				const pushpin = new Microsoft.Maps.Pushpin(new Microsoft.Maps.Location(marker.lat, marker.lng), {color: 'red'});
+				map.entities.push(pushpin);
+			})
+		}
+
+		const removeMarker = () => {
+			pinToggle = false;
+			for(let i = map.entities.getLength() - 1; i >= 0; i--){
+				if (map.entities.get(i) instanceof Microsoft.Maps.Pushpin) map.entities.removeAt(i);
+			}
+		}
+
+		const addPushpinLayer = () => {
+			//Register the custom module.
+			Microsoft.Maps.registerModule('HtmlPushpinLayerModule', 'HtmlPushpinLayerModule.js');
+
+			//Load the module.
+			Microsoft.Maps.loadModule('HtmlPushpinLayerModule', function () {
+				//Create a simple reusable HTML template to keep things easy.
+				const div = '<div class="marker"></div>';
+				pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
+				const layer = new HtmlPushpinLayer();
+				layer.setPushpins(pins);
+
+				//Add the HTML pushpin to the map.
+				map.layers.insert(layer);
 			});
 		}
 
@@ -97,22 +128,7 @@
 			}
 		}
 
-		const placeMarker = () => {
-			//Register the custom module.
-      Microsoft.Maps.registerModule('HtmlPushpinLayerModule', 'HtmlPushpinLayerModule.js');
-
-      //Load the module.
-      Microsoft.Maps.loadModule('HtmlPushpinLayerModule', function () {
-          //Create a simple reusable HTML template to keep things easy.
-          const div = '<div class="marker"></div>';
-          pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
-          const layer = new HtmlPushpinLayer();
-          layer.setPushpins(pins);
-
-          //Add the HTML pushpin to the map.
-          map.layers.insert(layer);
-      });
-		}
+		
 	</script>
 </body>
 </html>

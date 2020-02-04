@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>BINGMAP HEATMAP</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="icon" type="image/png" href="https://cdn3.iconfinder.com/data/icons/logos-brands-3/24/logo_brand_brands_logos_bing-512.png">
+	<script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB' async defer></script>
+</head>
+<body onload="GetMap();">
+	<style>
+		body{
+			margin: 0;
+			padding: 0;
+		}
+		#map{
+			width: 100vw;
+			height: 100vh;
+		}
+		.marker{
+			height: 8px;
+			width: 8px;
+			border-radius: 50%;
+			background-color: red;
+		}
+		button{
+			cursor: pointer;
+			position: fixed;
+			z-index: 500;
+			top: 1em;
+			left: 1em;
+			padding: 0.5em 1em;
+			outline:none;
+			border-radius: 5px;
+		}
+		button.active{
+			background-color: green;
+			color: white;
+		}
+	</style>
+	<div id='map'></div>
+	<button onclick="toggleHeatmap();">Heatmap</button>
+	<script>
+		const	key = "AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB",
+				markersList = [
+						{
+							lat: 37.550584,  
+							lng: -122.317186,
+							street: "Bovet Road",
+						},{
+							lat: 37.549989,
+							lng:  -122.316532,
+							street: "Bovet Road",
+						},{
+							lat: 37.550201, 
+							lng:  -122.315727,
+							street: "Bovet Road",
+						},{
+							lat: 37.550541, 
+							lng:  -122.315276,
+							street: "Bovet Road",
+						},{
+							lat: 37.550864, 
+							lng: -122.314825,
+							street: "Bovet Road",
+						},{
+							lat: 37.551647, 
+							lng: -122.314568,
+							street: "Bovet Road",
+						},
+					];
+		let map, pins, heatmapToggle;
+		const GetMap = () => {
+			map = new Microsoft.Maps.Map("#map", {
+				credentials: key,
+				center: new Microsoft.Maps.Location(37.5495379, -122.3187422),
+				mapTypeId: Microsoft.Maps.MapTypeId.road,
+    		zoom: 16
+			});
+			placeMarker();
+			// Microsoft.Maps.Events.addHandler(map, 'mousewheel', () => {
+			// 	console.log(map.getZoom());
+			// 	if (map.getZoom() < 16 && pins) {
+			// 		removePushpinsLayer();
+			// 	} else if(map.getZoom() >= 16 && !pins){
+			// 		placeMarker();
+			// 	}
+			// });
+		}
+
+		const placeMarkerLayer = () => {
+			//Register the custom module.
+	    	Microsoft.Maps.registerModule('HtmlPushpinLayerModule', 'HtmlPushpinLayerModule.js');
+
+	    	//Load the module.
+	    	Microsoft.Maps.loadModule('HtmlPushpinLayerModule', function () {
+				//Create a simple reusable HTML template to keep things easy.
+				const div = '<div class="marker"></div>';
+				pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
+				const layer = new HtmlPushpinLayer();
+				layer.setPushpins(pins);
+
+				//Add the HTML pushpin to the map.
+				map.layers.insert(layer);
+			});
+		}
+
+		const removePushpinsLayer = () => {
+			for(let i = 0; i < map.layers.length; i++){
+				if (map.layers[i]._pushpins) map.layers.removeAt(i)
+			}
+			pins = null;
+		}
+
+		const placeMarker = () => {
+			markersList.forEach(marker => {
+				const pushpin = new Microsoft.Maps.Pushpin(new Microsoft.Maps.Location(marker.lat, marker.lng), {color: 'red'});
+				map.entities.push(pushpin);
+			})
+		}
+
+		const removeMarker = () => {
+			for(let i = map.entities.getLength() - 1; i >= 0; i--){
+				if (map.entities.get(i) instanceof Microsoft.Maps.Pushpin) map.entities.removeAt(i);
+			}
+		}
+
+		const toggleHeatmap = e => {
+			heatmapToggle = !heatmapToggle;
+			if (heatmapToggle) {
+				document.querySelector('button').classList.toggle("active");
+				removeMarker();
+				Microsoft.Maps.loadModule(['Microsoft.Maps.GeoJson', 'Microsoft.Maps.HeatMap'], () => {
+					const points = markersList.map(marker => new Microsoft.Maps.Location(marker.lat, marker.lng));
+
+					markersList.forEach(marker => {
+						points.push(new Microsoft.Maps.WeightedLocation(new Microsoft.Maps.Location(marker.lat, marker.lng), Math.random()))
+					})
+					console.log(points);
+					const options = {
+							// customize heatmap
+							intensity: 0.85,
+							radius: 30,
+							colorGradient: {
+								'0': 'Black',
+								'0.4': 'Purple',
+								'0.6': 'Red',
+								'0.8': 'Yellow',
+								'1': 'White'
+							},
+							aggregateLocationWeights: true
+						}
+					// const heatmap = new Microsoft.Maps.HeatMapLayer(points)
+					const heatmap = new Microsoft.Maps.HeatMapLayer(points, options)
+					map.layers.insert(heatmap);
+					// map.entities.push(heatmap);
+				})
+			} else {
+				document.querySelector('button').classList.toggle("active");
+				placeMarker();
+				for(let i = map.layers.length - 1; i >= 0; i--){
+					if (map.layers[i] instanceof Microsoft.Maps.HeatMapLayer) map.layers.removeAt(i);
+				}
+			}
+		}
+	</script>
+</body>
+</html>
