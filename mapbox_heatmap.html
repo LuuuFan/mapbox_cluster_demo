@@ -187,7 +187,7 @@
 							'id': 'heatmap',
 							'type': 'heatmap',
 							'source': 'heatmap',
-							'maxzoom': 20,
+							// 'maxzoom': 20,
 							'paint': {
 								// Increase the heatmap weight based on frequency and property magnitude
 								// 'heatmap-weight': ['interpolate',['linear'],['get', 'weight'],0,0,6,1],
@@ -214,12 +214,6 @@
 													1,'rgb(178,24,43)'],
 								// Adjust the heatmap radius by zoom level
 								'heatmap-radius': ['interpolate',['linear'],['zoom'],0,2,9,20],
-								// Transition from heatmap to circle layer by zoom level
-								// 'heatmap-opacity': ['interpolate',['linear'],['zoom'],7,1,9,0],
-								// increase radius as zoom increases
-								// 'heatmap-radius': {
-								// 	stops: [[11, 15],[15, 20]]
-								// },
 								// decrease opacity to transition into the circle layer
 								'heatmap-opacity': {
 									default: 1,
@@ -232,14 +226,8 @@
 				"id": "heatmap-point",
 				"type": "circle",
 				"source": "heatmap",
-				"minzoom": 14,
+				"minzoom": 15,
 				"paint": {
-					// Size circle radius by earthquake magnitude and zoom level
-					// 'circle-radius': [
-					// 		'interpolate',['linear'],['zoom'], 
-					// 		7,['interpolate', ['linear'], ['get', 'mag'], 1, 1, 6, 4], 
-					// 		16,['interpolate', ['linear'], ['get', 'mag'], 1, 5, 6, 50]
-					// 	],
 					'circle-radius': {
 						property: 'weight',
 						type: 'exponential',
@@ -250,16 +238,6 @@
 							[{ zoom: 22, value: 62 }, 50],
 						]
 					},
-					// Color circle by earthquake magnitude
-					// 'circle-color': [
-					// 		'interpolate',['linear'],['get', 'weight'],
-					// 		1,'rgba(33,102,172,0)',
-					// 		2,'rgb(103,169,207)',
-					// 		3,'rgb(209,229,240)',
-					// 		4,'rgb(253,219,199)',
-					// 		5,'rgb(239,138,98)',
-					// 		6,'rgb(178,24,43)'
-					// 	],
 					'circle-color': {
 						property: 'weight',
 						type: 'exponential',
@@ -289,9 +267,8 @@
 							.setHTML(makeTalbePopup())
 							.addTo(map);
 			});
-
-			map.on("mouseenter", "route", () => map.getCanvas().style.cursor = "pointer")
-			map.on("mouseleave", "route", () => map.getCanvas().style.cursor = "")
+			map.on("mouseenter", "heatmap", () => map.getCanvas().style.cursor = "pointer")
+			map.on("mouseleave", "heatmap", () => map.getCanvas().style.cursor = "")
 		}
 
 		const makeTalbePopup = (camera, idx) => {
@@ -342,17 +319,8 @@
 			})
 		}
 
-		const readGeoJSON = () => {
-			fetch("http://localhost:4444/trees.geojson")
-				.then(res => res.json())
-				.then(data => {
-					console.log(data)
-				}).catch(err => console.error(err))
-		}
-
 		(function(){
 			initMap();
-			readGeoJSON();
 		})();
 	</script>
 </body>
