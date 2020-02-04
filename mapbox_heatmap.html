@@ -16,6 +16,7 @@
 			margin: 0;
 			padding: 0;
 			font-family: Arial;
+			font-size: 1em;
 		}
 		ul{
 			list-style: none;
@@ -24,10 +25,11 @@
 			position: fixed;
 			z-index: 500;
 			background-color: white;
-			top: 1em;
+			top: 3em;
 			left: 1em;
 			border-radius: 5px;
 			overflow: hidden;
+			box-sizing: border-box;
 		}
 		li{
 			cursor: pointer;
@@ -70,8 +72,25 @@
 		.player{
 			margin: 0.5em;
 		}
+		button{
+			box-sizing: border-box;
+			position: fixed;
+			padding: 0.5em 1em;
+			outline: none;
+			cursor: pointer;
+			top: 1em;
+			left: 1em;
+			border-radius: 5px;
+			background-color: white;
+			border:none;
+		}
+		button.active{
+			background-color: green;
+			color: white;
+		}
 	</style>
 	<div id='map'></div>
+	<button onclick="toggleHeatmap();" class="heatmap">Heatmap</button>
 	<ul class='layers'>
 	</ul>
 	<script>
@@ -104,7 +123,7 @@
 						street: "Bovet Road",
 					},
 				]
-		let map, markers = [];
+		let map, markers = [], heatmapToggle;
 
 		const initMap = () => {
 			map = new mapboxgl.Map({
@@ -120,58 +139,107 @@
 				})
 			);
 			map.addControl(new mapboxgl.NavigationControl());
-			map.on('zoom', function(){
-				if (map.getZoom() < 15 && markers.length) {
-					markers.forEach(marker => marker.remove())
-					markers = [];
-					if(!map.getLayer("route")) putLineLayer();
-				} else if(map.getZoom() >= 15 && !markers.length) placeMarker();
-			})
+			placeMarker();
+			renderLayerList();
 		}
 
-		const putLineLayer = () => {
+		const toggleHeatmap = () => {
+			heatmapToggle = !heatmapToggle;
+			document.querySelector('.heatmap').classList.toggle("active");
+			if (heatmapToggle) {
+				markers.forEach(marker => marker.remove())
+				markers = [];
+				addHeatmap();
+			} else {
+				placeMarker();
+				map.removeLayer("heatmap");
+				map.removeLayer("heatmap-point");
+			}
+		}
+
+		const makeGeoJSONPoint = (lat, lng, idx) => ({
+			"type": "Feature",
+			"properties": {
+				"id": idx,
+			},
+			"geometry": {
+				"type": "Point",
+				"coordinates": [lng, lat, 0.0]
+			}
+		})
+
+		const addHeatmap = () => {
 			if (!map) return;
-			map.addSource('route', {
-									'type': 'geojson',
-									'data': {
-										'type': 'Feature',
-										'properties': {
-											'count': markersList.length,
-										},
-										'geometry': {
-										'type': 'LineString',
-										'coordinates': markersList.map(m => [m.lng, m.lat]),
-										},
-									}
-						});
+			const points = markersList.map((marker, idx) => makeGeoJSONPoint(marker.lat, marker.lng, idx));
+			if (!map.getSource("heatmap")) map.addSource('heatmap', {
+																		'type': 'geojson',
+																		'data': {
+																			'type': 'FeatureCollection',
+																			'properties': {
+																				'count': markersList.length,
+																			},
+																			"features": points,
+																		}
+																	});
 
 			map.addLayer({
-							'id': 'route',
-							'type': 'line',
-							'source': 'route',
-							'layout': {
-										'line-join': 'round',
-										'line-cap': 'round'
-									},
+							'id': 'heatmap',
+							'type': 'heatmap',
+							'source': 'heatmap',
+							'maxzoom': 16,
 							'paint': {
-										'line-color': '#ff0000',
-										'line-width': 5
-									}
+								// Increase the heatmap weight based on frequency and property magnitude
+								'heatmap-weight': ['interpolate',['linear'],['get', 'mag'],0,0,6,1],
+								// Increase the heatmap color weight weight by zoom level
+								// heatmap-intensity is a multiplier on top of heatmap-weight
+								'heatmap-intensity': ['interpolate',['linear'],['zoom'],0,1,9,3],
+								// Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+								// Begin color ramp at 0-stop with a 0-transparancy color
+								// to create a blur-like effect.
+								'heatmap-color': ['interpolate',['linear'],['heatmap-density'],
+													0,'rgba(33,102,172,0)',
+													0.2,'rgb(103,169,207)',
+													0.4,'rgb(209,229,240)',
+													0.6,'rgb(253,219,199)',
+													0.8,'rgb(239,138,98)',
+													1,'rgb(178,24,43)'],
+								// Adjust the heatmap radius by zoom level
+								'heatmap-radius': ['interpolate',['linear'],['zoom'],0,2,9,20],
+								// Transition from heatmap to circle layer by zoom level
+								'heatmap-opacity': ['interpolate',['linear'],['zoom'],7,1,9,0]
+							},
 						});
 
 			map.addLayer({
-				'id': 'route-label',
-				'type': 'symbol', 
-				'source': 'route',
-				'layout': {
-					'text-field': "{count}",
-					"text-size": 12
+				"id": "heatmap-point",
+				"type": "circle",
+				"source": "heatmap",
+				"minzoom": 15,
+				"paint": {
+					// Size circle radius by earthquake magnitude and zoom level
+					'circle-radius': [
+							'interpolate',['linear'],['zoom'], 
+							7,['interpolate', ['linear'], ['get', 'mag'], 1, 1, 6, 4], 
+							16,['interpolate', ['linear'], ['get', 'mag'], 1, 5, 6, 50]
+						],
+					// Color circle by earthquake magnitude
+					'circle-color': [
+							'interpolate',['linear'],['get', 'mag'],
+							1,'rgba(33,102,172,0)',
+							2,'rgb(103,169,207)',
+							3,'rgb(209,229,240)',
+							4,'rgb(253,219,199)',
+							5,'rgb(239,138,98)',
+							6,'rgb(178,24,43)'
+						],
+					'circle-stroke-color': 'white',
+					'circle-stroke-width': 1,
+					// Transition from heatmap to circle layer by zoom level
+					'circle-opacity': ['interpolate',['linear'],['zoom'],7,0,8,1]
 				}
 			})
-			map.setLayerZoomRange('route', 2, 15);
-			map.setLayerZoomRange('route-label', 2, 15);
-			
-			map.on("click", "route", e => {
+
+			map.on("click", "heatmap", e => {
 				new mapboxgl.Popup()
 							.setLngLat(e.lngLat)
 							.setHTML(makeTalbePopup())
@@ -232,8 +300,6 @@
 
 		(function(){
 			initMap();
-			renderLayerList();
-			placeMarker();
 		})();
 	</script>
 </body>
