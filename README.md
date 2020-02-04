@@ -19,3 +19,9 @@ https://docs.mapbox.com/mapbox-gl-js/example/geojson-polygon/
 
 ## Bing Map
 
+- Add polyline:
+https://www.bing.com/api/maps/sdk/mapcontrol/isdk/deletepolylines#HTML
+
+- Add polygon:
+https://www.bing.com/api/maps/sdk/mapcontrol/isdk/addstyledpolygon#HTML
+
