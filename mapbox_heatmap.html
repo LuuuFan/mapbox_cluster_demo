@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MAPBOX HEATMAP</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+	<link rel="icon" type="image/png" href="https://res.cloudinary.com/dq132990i/image/upload/v1580538916/intmqwj8xyz5zx6ikhfn.png">
+	<script src="https://api.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.js"></script>
+	<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.2/mapbox-gl-geocoder.min.js"></script>
+	<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.2/mapbox-gl-geocoder.css" type="text/css"/>
+	<link href="https://api.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.css" rel="stylesheet" />
+</head>
+<body>
+	<style>
+		body{
+			margin: 0;
+			padding: 0;
+			font-family: Arial;
+		}
+		ul{
+			list-style: none;
+			margin: 0;
+			padding: 0;
+			position: fixed;
+			z-index: 500;
+			background-color: white;
+			top: 1em;
+			left: 1em;
+			border-radius: 5px;
+			overflow: hidden;
+		}
+		li{
+			cursor: pointer;
+			padding: 0.3em 0.5em;
+			text-align: center;
+			color: gray;
+		}
+		li:hover{
+			background-color: #ededed;
+		}
+		.marker{
+			cursor: pointer;
+			height: 1em;
+			width: 1em;
+			border-radius: 50%;
+			background-color: red;
+		}
+		#map{
+			width: 100vw;
+			height: 100vh;
+		}
+		table{
+			border-radius: 5px;
+			border: 1px solid lightgray;
+			margin: 1em;
+			border-spacing: 0;
+		}
+		th{
+			text-align: center;
+		}
+		td{
+			padding: 0.1em 0.3em;
+		}
+		tfoot, thead{
+			background-color: #ededed;
+		}
+		tfoot>tr>td, thead>tr>td{
+			padding: 0.3em;
+		}
+		.player{
+			margin: 0.5em;
+		}
+	</style>
+	<div id='map'></div>
+	<ul class='layers'>
+	</ul>
+	<script>
+		mapboxgl.accessToken = 'pk.eyJ1IjoibHV1dWZhbiIsImEiOiJjanYydjVqb2syOTI1M3ptZnc1ajdpdjdvIn0.JNx8tF4VUm10y4YyaG3vow';
+		const	layerList = ["streets-v11", "light-v10", "dark-v10", "outdoors-v11", "satellite-v9"],
+				markersList = [
+					{
+						lat: 37.550584,  
+						lng: -122.317186,
+						street: "Bovet Road",
+					},{
+						lat: 37.549989,
+						lng:  -122.316532,
+						street: "Bovet Road",
+					},{
+						lat: 37.550201, 
+						lng:  -122.315727,
+						street: "Bovet Road",
+					},{
+						lat: 37.550541, 
+						lng:  -122.315276,
+						street: "Bovet Road",
+					},{
+						lat: 37.550864, 
+						lng: -122.314825,
+						street: "Bovet Road",
+					},{
+						lat: 37.551647, 
+						lng: -122.314568,
+						street: "Bovet Road",
+					},
+				]
+		let map, markers = [];
+
+		const initMap = () => {
+			map = new mapboxgl.Map({
+						container: 'map', // container id
+						style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
+						center: [-122.3187422, 37.5495379], // starting position [lng, lat]
+						zoom: 16 // starting zoom
+						});
+			map.addControl(
+				new MapboxGeocoder({
+					accessToken: mapboxgl.accessToken,
+					mapboxgl: mapboxgl
+				})
+			);
+			map.addControl(new mapboxgl.NavigationControl());
+			map.on('zoom', function(){
+				if (map.getZoom() < 15 && markers.length) {
+					markers.forEach(marker => marker.remove())
+					markers = [];
+					if(!map.getLayer("route")) putLineLayer();
+				} else if(map.getZoom() >= 15 && !markers.length) placeMarker();
+			})
+		}
+
+		const putLineLayer = () => {
+			if (!map) return;
+			map.addSource('route', {
+									'type': 'geojson',
+									'data': {
+										'type': 'Feature',
+										'properties': {
+											'count': markersList.length,
+										},
+										'geometry': {
+										'type': 'LineString',
+										'coordinates': markersList.map(m => [m.lng, m.lat]),
+										},
+									}
+						});
+
+			map.addLayer({
+							'id': 'route',
+							'type': 'line',
+							'source': 'route',
+							'layout': {
+										'line-join': 'round',
+										'line-cap': 'round'
+									},
+							'paint': {
+										'line-color': '#ff0000',
+										'line-width': 5
+									}
+						});
+
+			map.addLayer({
+				'id': 'route-label',
+				'type': 'symbol', 
+				'source': 'route',
+				'layout': {
+					'text-field': "{count}",
+					"text-size": 12
+				}
+			})
+			map.setLayerZoomRange('route', 2, 15);
+			map.setLayerZoomRange('route-label', 2, 15);
+			
+			map.on("click", "route", e => {
+				new mapboxgl.Popup()
+							.setLngLat(e.lngLat)
+							.setHTML(makeTalbePopup())
+							.addTo(map);
+			});
+
+			map.on("mouseenter", "route", () => map.getCanvas().style.cursor = "pointer")
+			map.on("mouseleave", "route", () => map.getCanvas().style.cursor = "")
+		}
+
+		const makeTalbePopup = (camera, idx) => {
+			let str = "<table><thead><tr><th>Name</th><th>Lat</th><th>Lng</th></tr></thead><tbody>";
+			if (camera) {
+					str += `<tr><td>Camera${idx + 1}</td><td>${camera.lat}</td><td>${camera.lng}</td></tr>`
+			} else {
+				markersList.forEach((camera, idx) => {
+					str += `<tr><td>Camera${idx + 1}</td><td>${camera.lat}</td><td>${camera.lng}</td></tr>`
+				})
+			}
+			str += "</tbody><tfoot><tr><td colspan='3'></td></tr></tfoot>"
+			return str;
+		}
+
+		const renderLayerList = () => {
+			const ul = document.querySelector(".layers");
+			layerList.forEach(layer => {
+				const li = document.createElement("li");
+				li.innerHTML = layer.split("-")[0];
+				li.setAttribute("data-layer", layer);
+				li.onclick = changeLayer;
+				// li.addEventListener("click", changeLayer);
+				ul.appendChild(li);
+			})
+		}
+
+		const changeLayer = e => {
+			if (!map) return;
+			map.setStyle('mapbox://styles/mapbox/' + e.currentTarget.dataset.layer);
+		}
+
+		const placeMarker = () => {
+			if (!map) return;
+			markersList.forEach((camera, idx) => {
+				const div = document.createElement("div");
+				div.classList.add("marker");
+
+				// create the marker
+				const marker = new mapboxgl.Marker(div)
+					.setLngLat([camera.lng, camera.lat])
+					.setPopup(new mapboxgl.Popup()
+											// .setHTML(makeTalbePopup(camera, idx))) // sets a popup on this marker
+											.setMaxWidth(500)
+											.setHTML(`<div class='player'><iframe src="https://www.youtube.com/embed/1znmB0gQgS4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`)) // sets a popup on this marker
+					.addTo(map);
+				markers.push(marker);
+			})
+		}
+
+		(function(){
+			initMap();
+			renderLayerList();
+			placeMarker();
+		})();
+	</script>
+</body>
+</html>

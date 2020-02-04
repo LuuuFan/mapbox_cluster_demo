@@ -17,6 +17,9 @@ https://docs.mapbox.com/mapbox-gl-js/example/geojson-line/
 - Add a GeoJSON polygon:
 https://docs.mapbox.com/mapbox-gl-js/example/geojson-polygon/
 
+- Heatmap:
+https://docs.mapbox.com/mapbox-gl-js/example/heatmap-layer/
+
 ## Bing Map
 
 - Add polyline:
@@ -24,4 +27,7 @@ https://www.bing.com/api/maps/sdk/mapcontrol/isdk/deletepolylines#HTML
 
 - Add polygon:
 https://www.bing.com/api/maps/sdk/mapcontrol/isdk/addstyledpolygon#HTML
+
+- Heatmap:
+https://www.bing.com/api/maps/sdk/mapcontrol/isdk/customizedheatmap#JS
 
