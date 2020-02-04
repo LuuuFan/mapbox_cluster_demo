@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>BINGMAP CLUSTER DEMO - Line</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="icon" type="image/png" href="https://cdn3.iconfinder.com/data/icons/logos-brands-3/24/logo_brand_brands_logos_bing-512.png">
+	<script type='text/javascript' src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB' async defer></script>
+</head>
+<body onload="GetMap();">
+	<style>
+		body{
+			margin: 0;
+			padding: 0;
+		}
+		#map{
+			width: 100vw;
+			height: 100vh;
+		}
+	</style>
+	<div id='map'></div>
+	<script>
+		const key = "AjbJF8oh5g2iFuNy3I6wRF1dgb7yoosTDSEW54fDXlfJNyC85WQWDeMgIhn3MumB",
+					markersList = [
+							{
+								lat: 37.550584,  
+								lng: -122.317186,
+								street: "Bovet Road",
+							},{
+								lat: 37.549989,
+								lng:  -122.316532,
+								street: "Bovet Road",
+							},{
+								lat: 37.550201, 
+								lng:  -122.315727,
+								street: "Bovet Road",
+							},{
+								lat: 37.550541, 
+								lng:  -122.315276,
+								street: "Bovet Road",
+							},{
+								lat: 37.550864, 
+								lng: -122.314825,
+								street: "Bovet Road",
+							},{
+								lat: 37.551647, 
+								lng: -122.314568,
+								street: "Bovet Road",
+							},
+						];
+		let map;
+		const GetMap = () => {
+			map = new Microsoft.Maps.Map("#map", {
+				credentials: key,
+				center: new Microsoft.Maps.Location(37.5495379, -122.3187422),
+				mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+    		zoom: 16
+			});
+			placeMarker();
+		}
+
+		const placeMarker = () => {
+			//Register the custom module.
+      Microsoft.Maps.registerModule('HtmlPushpinLayerModule', 'HtmlPushpinLayerModule.js');
+
+      //Load the module.
+      Microsoft.Maps.loadModule('HtmlPushpinLayerModule', function () {
+          //Create a simple reusable HTML template to keep things easy.
+          const div = '<div style="background-color:red;width:1em;height:1em;border-radius: 50%;"></div>';
+          const pins = markersList.map(camera => new HtmlPushpin(new Microsoft.Maps.Location(camera.lat, camera.lng), div, new Microsoft.Maps.Point(50, 12)))
+          const layer = new HtmlPushpinLayer();
+          layer.setPushpins(pins);
+
+          //Add the HTML pushpin to the map.
+          map.layers.insert(layer);
+      });
+		}
+	</script>
+</body>
+</html>
